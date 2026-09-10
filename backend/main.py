@@ -1,17 +1,32 @@
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT, HTTP_409_CONFLICT
 
 from auth.auth import get_current_active_user, get_current_admin_user, get_password_hash
 from auth.auth_routes import router as auth_router
+from config import ALLOWED_ORIGINS
 from database.database import get_db
 from models.usuario_connection import UsuarioConnection
 from schema.usuario_schema import UsuarioCreateSchema, UsuarioOut, UsuarioUpdateSchema
 
 app = FastAPI(title="Sistema de Crédito Fiado - API")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth_router)
+
+
+@app.get("/", status_code=HTTP_200_OK)
+def health_check():
+    return {"status": "ok"}
 
 
 @app.get("/api/usuarios/me", response_model=UsuarioOut, status_code=HTTP_200_OK)
@@ -98,6 +113,8 @@ def delete_usuario(usuario_id: str, conn=Depends(get_db)):
 
 
 if __name__ == "__main__":
+    import os
+
     import uvicorn
 
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", "8000")), reload=True)
