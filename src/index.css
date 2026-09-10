@@ -4,17 +4,68 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tema oscuro (por defecto). */
+:root {
+  --bg-app: #0d1117;
+  --bg-surface: #161b22;
+  --bg-elevated: #21262d;
+  --bg-elevated-rgb: 33 38 45;
+  --border: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #7d8590;
+  --text-muted: #484f58;
+  --accent-blue: #58a6ff;
+  --accent-blue-rgb: 88 166 255;
+  --accent-green: #238636;
+  --accent-green-rgb: 35 134 54;
+  --accent-green-hover: #2ea043;
+  --accent-green-light: #3fb950;
+  --accent-red: #f85149;
+  --accent-red-rgb: 248 81 73;
+  --accent-yellow: #d29922;
+  --bg-red-subtle: #3d1a19;
+  --bg-yellow-subtle: #3d2d0a;
+  --bg-green-subtle: #1a3d24;
+  --bg-blue-subtle: #1a2d3d;
+}
+
+/* Tema claro, activado al poner data-theme="light" en <html>. */
+html[data-theme='light'] {
+  --bg-app: #f6f8fa;
+  --bg-surface: #ffffff;
+  --bg-elevated: #eaeef2;
+  --bg-elevated-rgb: 234 238 242;
+  --border: #d0d7de;
+  --text-primary: #1f2328;
+  --text-secondary: #59636e;
+  --text-muted: #8c959f;
+  --accent-blue: #0969da;
+  --accent-blue-rgb: 9 105 218;
+  --accent-green: #1f883d;
+  --accent-green-rgb: 31 136 61;
+  --accent-green-hover: #1a7f37;
+  --accent-green-light: #1a7f37;
+  --accent-red: #d1242f;
+  --accent-red-rgb: 209 36 47;
+  --accent-yellow: #9a6700;
+  --bg-red-subtle: #ffebe9;
+  --bg-yellow-subtle: #fff8c5;
+  --bg-green-subtle: #dafbe1;
+  --bg-blue-subtle: #ddf4ff;
+}
+
 html,
 body,
 #root {
   height: 100%;
-  background-color: #0d1117;
-  color: #e6edf3;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #30363d transparent;
+  scrollbar-color: var(--border) transparent;
 }
 
 *::-webkit-scrollbar {
@@ -27,13 +78,13 @@ body,
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: #30363d;
+  background-color: var(--border);
   border-radius: 2px;
 }
 
 select option {
-  background-color: #21262d;
-  color: #e6edf3;
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
 }
 
 input[type='number']::-webkit-inner-spin-button,
