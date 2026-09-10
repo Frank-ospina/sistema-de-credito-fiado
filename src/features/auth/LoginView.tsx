@@ -35,7 +35,7 @@ export function LoginView({ onLogin }: LoginViewProps) {
   return (
     <div className="relative min-h-full flex flex-col items-center justify-center p-6 bg-[var(--bg-app)]">
       <div className="absolute top-4 right-4"><ThemeToggle /></div>
-      <div className="flex items-center gap-3 mb-10"><div className="w-10 h-10 rounded-xl bg-[var(--accent-green)] flex items-center justify-center text-white text-lg font-bold select-none shadow-lg">F</div><div><div className="font-semibold text-[var(--text-primary)] text-lg leading-tight">FiadoApp</div><div className="text-xs text-[var(--text-muted)]">Tienda de barrio</div></div></div>
+      <div className="flex items-center justify-center mb-10"><img src="/logo.png.png" alt="Fiado - Sistema de Crédito para Tiendas" className="w-72 max-w-full h-auto object-contain" /></div>
       <div className="w-full max-w-sm bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl p-8 shadow-2xl">
         <h1 className="text-xl font-semibold text-[var(--text-primary)] mb-1">Iniciar sesión</h1>
         <p className="text-sm text-[var(--text-secondary)] mb-7">Accede con tus credenciales de usuario</p>
