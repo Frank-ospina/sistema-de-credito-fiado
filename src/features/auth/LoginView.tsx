@@ -3,38 +3,32 @@ import type { FormEvent } from 'react'
 import type { Usuario } from '../../domain/types'
 import { IcoEye, IcoEyeOff } from '../../components/icons'
 import { FieldInput } from '../../components/ui'
+import { login, LoginError } from '../../lib/api'
 
 type LoginViewProps = {
-  usuarios: Usuario[]
   onLogin: (usuario: Usuario) => void
 }
 
-/** Autentica usuarios activos contra los registros disponibles en memoria. */
-export function LoginView({ usuarios, onLogin }: LoginViewProps) {
+/** Autentica contra la API del backend y obtiene el perfil del usuario. */
+export function LoginView({ onLogin }: LoginViewProps) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPwd, setShowPwd] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     setError('')
     setLoading(true)
-    setTimeout(() => {
-      const usuario = usuarios.find(item => item.username === username.trim() && item.password === password)
-      if (!usuario) {
-        setError('Usuario o contraseña incorrectos.')
-        setLoading(false)
-        return
-      }
-      if (!usuario.activo) {
-        setError('Esta cuenta está desactivada. Contacta al administrador.')
-        setLoading(false)
-        return
-      }
-      onLogin(usuario)
-    }, 400)
+    try {
+      const usuario = await login(username.trim(), password)
+      onLogin({ ...usuario, password: '' })
+    } catch (err) {
+      setError(err instanceof LoginError ? err.message : 'Usuario o contraseña incorrectos.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (

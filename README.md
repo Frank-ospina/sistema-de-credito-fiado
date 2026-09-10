@@ -2,6 +2,8 @@
 
 Monolito para gestionar clientes, fiados, pagos, productos y usuarios de una tienda de barrio: frontend en React + TypeScript (raíz del repo) y backend en Python + FastAPI (`backend/`).
 
+Backend desplegado: https://sistema-de-credito-fiado.onrender.com/docs#/
+
 ## Desarrollo
 
 ```bash
