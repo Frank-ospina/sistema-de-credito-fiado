@@ -10,3 +10,10 @@ CREATE TABLE IF NOT EXISTS usuarios (
     activo BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Catálogo de productos usados al registrar deudas.
+CREATE TABLE IF NOT EXISTS productos (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(160) NOT NULL,
+    precio_actual NUMERIC(12, 2) NOT NULL CHECK (precio_actual >= 0)
+);
