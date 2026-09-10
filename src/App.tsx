@@ -28,8 +28,6 @@ export default function App() {
     setDeudas,
     pagos,
     setPagos,
-    usuarios,
-    setUsuarios,
     navigate,
   } = useAppState()
 
@@ -112,15 +110,7 @@ export default function App() {
           />
         )
       case 'usuarios':
-        return isAdmin ? (
-          <UsuariosAdmin
-            usuarios={usuarios}
-            currentUser={currentUser}
-            onAdd={user => setUsuarios(previous => [...previous, user])}
-            onUpdate={user => setUsuarios(previous => previous.map(item => item.id === user.id ? user : item))}
-            onDelete={id => setUsuarios(previous => previous.filter(user => user.id !== id))}
-          />
-        ) : null
+        return isAdmin ? <UsuariosAdmin currentUser={currentUser} /> : null
     }
   }
 

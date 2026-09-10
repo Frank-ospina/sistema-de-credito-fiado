@@ -1,4 +1,4 @@
-import type { Cliente, Deuda, Pago, Producto, Usuario } from '../domain/types'
+import type { Cliente, Deuda, Pago, Producto } from '../domain/types'
 
 export const initialClientes: Cliente[] = [
   { id: 'c1', nombre: 'María Fernanda Ríos', telefono: '300-456-7890', direccion: 'Cra 45 # 23-12, Apt 201', created_at: '2026-07-01' },
@@ -92,10 +92,4 @@ export const initialPagos: Pago[] = [
     aplicaciones: [{ deuda_id: 'd6', monto_aplicado: 18200 }],
     created_at: '2026-08-05',
   },
-]
-
-export const initialUsuarios: Usuario[] = [
-  { id: 'u1', nombre: 'Administrador', username: 'admin', password: 'admin123', rol: 'admin', activo: true, created_at: '2026-07-01' },
-  { id: 'u2', nombre: 'Carlos Vendedor', username: 'carlos', password: 'carlos123', rol: 'vendedor', activo: true, created_at: '2026-08-01' },
-  { id: 'u3', nombre: 'Laura Auxiliar', username: 'laura', password: 'laura123', rol: 'vendedor', activo: false, created_at: '2026-08-15' },
 ]

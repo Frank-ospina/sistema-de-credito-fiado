@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { initialClientes, initialDeudas, initialPagos, initialProductos, initialUsuarios } from '../data/initialData'
+import { initialClientes, initialDeudas, initialPagos, initialProductos } from '../data/initialData'
 import type { Cliente, Deuda, Pago, Producto, Usuario, ViewName } from '../domain/types'
 
 /**
@@ -16,7 +16,6 @@ export function useAppState() {
   const [productos, setProductos] = useState<Producto[]>(initialProductos)
   const [deudas, setDeudas] = useState<Deuda[]>(initialDeudas)
   const [pagos, setPagos] = useState<Pago[]>(initialPagos)
-  const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios)
 
   /** Cambia de vista y conserva el cliente relacionado cuando aplica. */
   const navigate = (nextView: ViewName, clienteId?: string) => {
@@ -41,8 +40,6 @@ export function useAppState() {
     setDeudas,
     pagos,
     setPagos,
-    usuarios,
-    setUsuarios,
     navigate,
   }
 }
