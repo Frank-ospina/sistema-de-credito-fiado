@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -20,6 +21,8 @@ class ProductoUpdateSchema(BaseModel):
 
 class ProductoOut(ProductoBase):
     id: int
+    created_at: datetime
+    updated_at: datetime
 
     @classmethod
     def from_row(cls, row: dict) -> "ProductoOut":
@@ -27,4 +30,6 @@ class ProductoOut(ProductoBase):
             id=row["id"],
             nombre=row["nombre"],
             precio_actual=float(row["precio_actual"]),
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
         )
