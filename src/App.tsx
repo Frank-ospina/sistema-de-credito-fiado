@@ -11,24 +11,9 @@ import { UsuariosAdmin } from './features/usuarios/UsuariosAdmin'
 import { AppShell } from './layout/AppShell'
 import { clearToken } from './lib/api'
 
-/** Punto de composición: conecta el estado global con cada feature y el layout. */
+/** Punto de composición: conecta la navegación con cada feature (autosuficiente) y el layout. */
 export default function App() {
-  const {
-    currentUser,
-    setCurrentUser,
-    view,
-    setView,
-    selectedClienteId,
-    preselectedClienteId,
-    clientes,
-    setClientes,
-    productos,
-    deudas,
-    setDeudas,
-    pagos,
-    setPagos,
-    navigate,
-  } = useAppState()
+  const { currentUser, setCurrentUser, view, setView, selectedClienteId, preselectedClienteId, navigate } = useAppState()
 
   const handleLogin = (user: Usuario) => {
     setCurrentUser(user)
@@ -46,57 +31,32 @@ export default function App() {
   }
 
   const isAdmin = currentUser.rol === 'admin'
+  const volverAlOrigen = () => preselectedClienteId ? navigate('cliente-detalle', preselectedClienteId) : navigate('clientes')
 
   const renderView = () => {
     switch (view) {
       case 'dashboard':
-        return <Dashboard clientes={clientes} deudas={deudas} pagos={pagos} onNavigate={navigate} />
+        return <Dashboard onNavigate={navigate} />
       case 'clientes':
-        return (
-          <ClientesList
-            clientes={clientes}
-            deudas={deudas}
-            pagos={pagos}
-            onNavigate={navigate}
-            onAddCliente={cliente => setClientes(previous => [...previous, cliente])}
-          />
-        )
+        return <ClientesList onNavigate={navigate} />
       case 'cliente-detalle':
         return selectedClienteId ? (
-          <ClienteDetalle
-            clienteId={selectedClienteId}
-            clientes={clientes}
-            deudas={deudas}
-            pagos={pagos}
-            onNavigate={navigate}
-            onBack={() => navigate('clientes')}
-          />
+          <ClienteDetalle key={selectedClienteId} clienteId={selectedClienteId} onNavigate={navigate} onBack={() => navigate('clientes')} />
         ) : null
       case 'nueva-deuda':
         return (
           <NuevaDeuda
             preselectedClienteId={preselectedClienteId}
-            clientes={clientes}
-            productos={productos}
-            onSave={deuda => {
-              setDeudas(previous => [...previous, deuda])
-              navigate('cliente-detalle', deuda.cliente_id)
-            }}
-            onCancel={() => preselectedClienteId ? navigate('cliente-detalle', preselectedClienteId) : navigate('clientes')}
+            onSaved={clienteId => navigate('cliente-detalle', clienteId)}
+            onCancel={volverAlOrigen}
           />
         )
       case 'registrar-pago':
         return (
           <RegistrarPago
             preselectedClienteId={preselectedClienteId}
-            clientes={clientes}
-            deudas={deudas}
-            pagos={pagos}
-            onSave={pago => {
-              setPagos(previous => [...previous, pago])
-              navigate('cliente-detalle', pago.cliente_id)
-            }}
-            onCancel={() => preselectedClienteId ? navigate('cliente-detalle', preselectedClienteId) : navigate('clientes')}
+            onSaved={clienteId => navigate('cliente-detalle', clienteId)}
+            onCancel={volverAlOrigen}
           />
         )
       case 'productos':
