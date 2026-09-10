@@ -1,16 +1,53 @@
 # FiadoApp
 
-Monolito para gestionar clientes, fiados, pagos, productos y usuarios de una tienda de barrio: frontend en React + TypeScript (raíz del repo) y backend en Python + FastAPI (`backend/`).
+**Sistema de crédito fiado** para tiendas de barrio: registra clientes, fía productos, cobra saldos y controla quién debe qué, con abonos parciales o pagos completos.
 
-Frontend desplegado: https://sistema-de-credito-fiado-frontend.onrender.com
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.112-009688?logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
+![Render](https://img.shields.io/badge/Deploy-Render-46E3B7?logo=render&logoColor=white)
 
-Backend desplegado: https://sistema-de-credito-fiado.onrender.com/docs#/
+**Demo en vivo:** [sistema-de-credito-fiado-frontend.onrender.com](https://sistema-de-credito-fiado-frontend.onrender.com) · **API docs:** [sistema-de-credito-fiado.onrender.com/docs](https://sistema-de-credito-fiado.onrender.com/docs)
 
-## Desarrollo
+<p align="center">
+  <img src="docs/login-preview.jpg" alt="Pantalla de inicio de sesión de FiadoApp" width="49%" />
+  <img src="docs/dashboard-preview.jpg" alt="Dashboard de FiadoApp con clientes y saldos" width="49%" />
+</p>
+
+## Qué hace
+
+- **Clientes**: alta, búsqueda y saldo consolidado por persona.
+- **Deudas (fiados)**: se arman con varias líneas de producto; el total se calcula solo, en el backend.
+- **Pagos**: un abono se puede repartir entre varias deudas pendientes de un mismo cliente.
+- **Estado en tiempo real**: cada deuda queda como *pendiente*, *parcial* o *pagada* según lo que ya se abonó, sin recalcular nada a mano.
+- **Usuarios y roles**: administradores gestionan el catálogo y el equipo; vendedores operan el día a día.
+- **Auditoría**: toda la información queda con fecha de creación y de última modificación.
+
+## Arquitectura
+
+Monolito de dos partes en el mismo repositorio:
+
+| | |
+| --- | --- |
+| **Frontend** | React 19 + TypeScript + Vite + Tailwind, en la raíz del repo |
+| **Backend** | Python + FastAPI + PostgreSQL (Neon), en [`backend/`](backend/README.md) |
+
+El frontend no guarda datos de negocio en memoria: cada pantalla llama directamente a la API (`src/lib/api.ts`) y el backend calcula saldos, totales y valida las reglas de negocio (ver el [diccionario de datos y las reglas](backend/README.md) del backend).
+
+## Desarrollo local
 
 ```bash
 npm install
 npm run dev
+```
+
+Por defecto el frontend apunta al backend desplegado en Render. Para usar un backend local, crea un `.env` (ver `.env.example`):
+
+```env
+VITE_API_URL=http://127.0.0.1:8000
 ```
 
 Comandos de calidad:
@@ -20,18 +57,19 @@ npm run lint
 npm run build
 ```
 
-## Estructura
+Instrucciones del backend (instalación, base de datos, variables de entorno) en [`backend/README.md`](backend/README.md).
 
-- `src/domain/types.ts`: contrato de datos del sistema y nombres de vistas/roles.
-- `src/domain/credit.ts`: cálculo de saldos y estados de deuda. Es la única fuente para estas reglas.
-- `src/data/initialData.ts`: registros iniciales usados por la demo.
-- `src/lib/formatters.ts`: IDs, fechas y moneda para presentación.
+## Estructura del frontend
+
+- `src/domain/types.ts`: tipos compartidos (usuario, roles, vistas, estado de deuda).
+- `src/lib/api.ts`: cliente HTTP hacia el backend (auth, usuarios, productos, clientes, deudas, pagos, historial).
+- `src/lib/formatters.ts`: fechas y moneda para presentación.
 - `src/components/ui`: controles visuales reutilizables (`Btn`, `Card`, campos y estados).
 - `src/components/icons`: iconos SVG usados por la interfaz.
-- `src/app/useAppState.ts`: estado compartido, colecciones en memoria y navegación.
+- `src/app/useAppState.ts`: sesión y navegación entre vistas.
 - `src/layout/AppShell.tsx`: sidebar, navegación móvil, usuario actual y logout.
-- `src/features`: una carpeta por flujo funcional.
-- `src/App.tsx`: composición de vistas y conexión de callbacks; no debe contener JSX de pantallas.
+- `src/features`: una carpeta por flujo funcional; cada pantalla carga sus propios datos del backend.
+- `src/App.tsx`: composición de vistas; no debe contener JSX de pantallas ni reglas de negocio.
 
 ## Mapa de funcionalidades
 
@@ -46,13 +84,4 @@ npm run build
 | Iniciar sesión | `src/features/auth/LoginView.tsx` |
 | Gestionar usuarios | `src/features/usuarios/UsuariosAdmin.tsx` |
 
-## Cómo seguir un flujo
-
-1. La pantalla solicita datos y ejecuta un callback recibido por props.
-2. `App.tsx` conecta ese callback con los setters de `useAppState`.
-3. `useAppState` actualiza la colección y navega a la siguiente vista.
-4. Las pantallas financieras calculan saldos mediante `src/domain/credit.ts`.
-
-Para añadir una funcionalidad, crea o modifica la feature correspondiente, agrega tipos en `domain/types.ts` si son necesarios y conecta la mutación en `App.tsx`. Evita poner reglas financieras o JSX de pantallas dentro de `App.tsx`.
-
-Actualmente el frontend mantiene los datos en memoria (se reinician al recargar). El backend en `backend/` (ver `backend/README.md`) ya expone autenticación y el CRUD de usuarios sobre PostgreSQL; conectar el resto de features al backend queda para la siguiente etapa.
+Para añadir una funcionalidad, crea o modifica la feature correspondiente, agrega tipos/llamadas en `lib/api.ts` si hace falta, y conecta la navegación en `App.tsx`. Evita poner reglas financieras o JSX de pantallas dentro de `App.tsx`.
