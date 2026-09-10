@@ -9,6 +9,7 @@ import { NuevaDeuda } from './features/deudas/NuevaDeuda'
 import { RegistrarPago } from './features/pagos/RegistrarPago'
 import { UsuariosAdmin } from './features/usuarios/UsuariosAdmin'
 import { AppShell } from './layout/AppShell'
+import { clearToken } from './lib/api'
 
 /** Punto de composición: conecta el estado global con cada feature y el layout. */
 export default function App() {
@@ -38,12 +39,13 @@ export default function App() {
   }
 
   const handleLogout = () => {
+    clearToken()
     setCurrentUser(null)
     setView('dashboard')
   }
 
   if (!currentUser) {
-    return <LoginView usuarios={usuarios} onLogin={handleLogin} />
+    return <LoginView onLogin={handleLogin} />
   }
 
   const isAdmin = currentUser.rol === 'admin'

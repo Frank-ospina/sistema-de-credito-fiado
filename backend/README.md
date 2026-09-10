@@ -2,6 +2,8 @@
 
 API en Python (FastAPI + PostgreSQL) que expone autenticación y el CRUD de usuarios. Basado en la estructura del proyecto de referencia `User-management-backend`: FastAPI, `psycopg2` con SQL crudo (sin ORM) y JWT.
 
+Desplegado en Render: https://sistema-de-credito-fiado.onrender.com/docs#/
+
 ## Estructura
 
 - `config/`: variables de entorno (conexión a la base de datos y JWT).
