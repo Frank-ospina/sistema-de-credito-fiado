@@ -1,6 +1,6 @@
 # Backend - Sistema de Crédito Fiado
 
-API en Python (FastAPI + PostgreSQL) que expone autenticación y el CRUD de usuarios y productos. Basado en la estructura del proyecto de referencia `User-management-backend`: FastAPI, `psycopg2` con SQL crudo (sin ORM) y JWT.
+API en Python (FastAPI + PostgreSQL) que expone autenticación y el CRUD de usuarios, productos, clientes, deudas, ventas y pagos. Basado en la estructura del proyecto de referencia `User-management-backend`: FastAPI, `psycopg2` con SQL crudo (sin ORM) y JWT.
 
 Desplegado en Render: https://sistema-de-credito-fiado.onrender.com/docs#/
 
@@ -8,18 +8,29 @@ Desplegado en Render: https://sistema-de-credito-fiado.onrender.com/docs#/
 
 - `config/`: variables de entorno (conexión a la base de datos y JWT).
 - `database/database.py`: conexión a PostgreSQL (`get_db` como dependencia de FastAPI).
-- `database/schema.sql`: script para crear las tablas `usuarios` y `productos`.
-- `models/usuario_connection.py`: acceso a datos (CRUD con SQL crudo) de `usuarios`.
-- `models/producto_connection.py`: acceso a datos (CRUD con SQL crudo) de `productos`.
-- `schema/usuario_schema.py`: esquemas Pydantic de entrada/salida del usuario.
-- `schema/producto_schema.py`: esquemas Pydantic de entrada/salida del producto.
+- `database/schema.sql`: script para crear todas las tablas (`usuarios`, `productos`, `clientes`, `deudas`, `venta_detalles`, `pagos`, `pago_aplicaciones`).
+- `models/*_connection.py`: acceso a datos (CRUD con SQL crudo), uno por entidad.
+- `schema/*_schema.py`: esquemas Pydantic de entrada/salida, uno por entidad.
 - `schema/auth_schema.py`: esquemas del token JWT.
 - `auth/auth.py`: hashing de contraseñas, creación/validación de JWT y dependencias de autorización (`get_current_active_user`, `get_current_admin_user`).
 - `auth/auth_routes.py`: endpoint de login (`POST /auth/token`).
-- `main.py`: endpoints del CRUD de usuarios y productos.
+- `main.py`: endpoints del CRUD de todas las entidades.
 - `create_admin.py`: script para crear o resetear el usuario administrador inicial.
 
-El modelo de `Usuario` replica el contrato definido en `../src/domain/types.ts` (`nombre`, `username`, `rol`: `admin` | `vendedor`, `activo`), agregando `password_hash` en vez de guardar la contraseña en texto plano. El modelo de `Producto` es `id` (entero autoincremental), `nombre` y `precio_actual` (decimal).
+El modelo de `Usuario` replica el contrato definido en `../src/domain/types.ts` (`nombre`, `username`, `rol`: `admin` | `vendedor`, `activo`), agregando `password_hash` en vez de guardar la contraseña en texto plano.
+
+### Diccionario de datos
+
+| Entidad | Campos | Relaciones |
+| --- | --- | --- |
+| `Cliente` | `id` (PK), `nombre`, `telefono`, `direccion` | 1 → N `Deuda`, 1 → N `Pago` |
+| `Producto` | `id` (PK), `nombre`, `precio_actual` | 1 → N `VentaDetalle` |
+| `Deuda` | `id` (PK), `cliente_id` (FK → Cliente), `monto_total`, `fecha_fiado` | 1 → N `VentaDetalle`, 1 → N `PagoAplicacion` |
+| `VentaDetalle` | `id` (PK), `deuda_id` (FK → Deuda), `producto_id` (FK → Producto), `cantidad`, `precio_unitario_venta` | — |
+| `Pago` | `id` (PK), `cliente_id` (FK → Cliente), `monto_pagado`, `fecha_pago`, `metodo_pago` | 1 → N `PagoAplicacion` |
+| `PagoAplicacion` | `id` (PK), `pago_id` (FK → Pago), `deuda_id` (FK → Deuda), `monto_aplicado` | — |
+
+Eliminar un `Cliente` elimina en cascada sus `Deuda` y `Pago` (y estos, a su vez, sus `VentaDetalle`/`PagoAplicacion`). No se puede eliminar un `Producto` referenciado por algún `VentaDetalle`.
 
 ## Instalación
 
@@ -80,5 +91,15 @@ Documentación interactiva en `http://127.0.0.1:8000/docs`.
 | POST | `/api/productos` | Crea un producto | Cualquier usuario activo |
 | PUT | `/api/productos/{id}` | Actualiza un producto (parcial) | Cualquier usuario activo |
 | DELETE | `/api/productos/{id}` | Elimina un producto | Cualquier usuario activo |
+| GET | `/api/clientes` | Lista todos los clientes | Cualquier usuario activo |
+| GET/POST/PUT/DELETE | `/api/clientes[/{id}]` | CRUD de clientes | Cualquier usuario activo |
+| GET | `/api/deudas?cliente_id=` | Lista deudas, opcionalmente filtradas por cliente | Cualquier usuario activo |
+| GET/POST/PUT/DELETE | `/api/deudas[/{id}]` | CRUD de deudas | Cualquier usuario activo |
+| GET | `/api/venta-detalles?deuda_id=` | Lista líneas de venta, opcionalmente filtradas por deuda | Cualquier usuario activo |
+| GET/POST/PUT/DELETE | `/api/venta-detalles[/{id}]` | CRUD de líneas de venta | Cualquier usuario activo |
+| GET | `/api/pagos?cliente_id=` | Lista pagos, opcionalmente filtrados por cliente | Cualquier usuario activo |
+| GET/POST/PUT/DELETE | `/api/pagos[/{id}]` | CRUD de pagos | Cualquier usuario activo |
+| GET | `/api/pago-aplicaciones?pago_id=&deuda_id=` | Lista aplicaciones de pago, opcionalmente filtradas | Cualquier usuario activo |
+| GET/POST/PUT/DELETE | `/api/pago-aplicaciones[/{id}]` | CRUD de aplicaciones de pago | Cualquier usuario activo |
 
 Las rutas protegidas requieren el header `Authorization: Bearer <token>` obtenido en `/auth/token`.
