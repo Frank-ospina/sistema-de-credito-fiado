@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
@@ -22,6 +23,8 @@ class ClienteUpdateSchema(BaseModel):
 
 class ClienteOut(ClienteBase):
     id: int
+    created_at: datetime
+    updated_at: datetime
 
     @classmethod
     def from_row(cls, row: dict) -> "ClienteOut":
@@ -30,4 +33,6 @@ class ClienteOut(ClienteBase):
             nombre=row["nombre"],
             telefono=row["telefono"],
             direccion=row.get("direccion"),
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
         )

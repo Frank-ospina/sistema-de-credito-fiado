@@ -17,6 +17,7 @@ from models.usuario_connection import UsuarioConnection
 from models.venta_detalle_connection import VentaDetalleConnection
 from schema.cliente_schema import ClienteCreateSchema, ClienteOut, ClienteUpdateSchema
 from schema.deuda_schema import DeudaCreateSchema, DeudaOut, DeudaUpdateSchema
+from schema.historial_schema import ClienteHistorialOut, DeudaConDetalleOut, PagoConAplicacionesOut
 from schema.pago_aplicacion_schema import PagoAplicacionCreateSchema, PagoAplicacionOut, PagoAplicacionUpdateSchema
 from schema.pago_schema import PagoCreateSchema, PagoOut, PagoUpdateSchema
 from schema.producto_schema import ProductoCreateSchema, ProductoOut, ProductoUpdateSchema
@@ -268,7 +269,7 @@ def create_deuda(deuda: DeudaCreateSchema, conn=Depends(get_db)):
     if not repo_cliente.get_by_id(deuda.cliente_id):
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
 
-    row = DeudaConnection(conn).create(cliente_id=deuda.cliente_id, monto_total=deuda.monto_total, fecha_fiado=deuda.fecha_fiado)
+    row = DeudaConnection(conn).create(cliente_id=deuda.cliente_id, fecha_fiado=deuda.fecha_fiado)
     return DeudaOut.from_row(row)
 
 
@@ -472,6 +473,34 @@ def get_pago_aplicacion(pago_aplicacion_id: int, conn=Depends(get_db)):
     return PagoAplicacionOut.from_row(row)
 
 
+def _validar_monto_aplicacion(conn, pago_id: int, deuda_id: int, monto_aplicado: float, excluir_id: Optional[int] = None) -> None:
+    """RF8: impide aplicar a una deuda más de lo que le hace falta, o repartir de un pago más de lo que se recibió."""
+    deuda_row = DeudaConnection(conn).get_by_id(deuda_id)
+    pago_row = PagoConnection(conn).get_by_id(pago_id)
+    ya_aplicado_deuda = float(deuda_row["monto_aplicado"])
+    ya_aplicado_pago = float(pago_row["monto_aplicado"])
+
+    if excluir_id is not None:
+        actual = PagoAplicacionConnection(conn).get_by_id(excluir_id)
+        ya_aplicado_deuda -= float(actual["monto_aplicado"])
+        ya_aplicado_pago -= float(actual["monto_aplicado"])
+
+    saldo_deuda = float(deuda_row["monto_total"]) - ya_aplicado_deuda
+    saldo_pago = float(pago_row["monto_pagado"]) - ya_aplicado_pago
+    margen = 0.01
+
+    if monto_aplicado > saldo_deuda + margen:
+        raise HTTPException(
+            status_code=400,
+            detail=f"El monto aplicado ({monto_aplicado:.2f}) excede el saldo pendiente de la deuda ({saldo_deuda:.2f}).",
+        )
+    if monto_aplicado > saldo_pago + margen:
+        raise HTTPException(
+            status_code=400,
+            detail=f"El monto aplicado ({monto_aplicado:.2f}) excede el saldo disponible del pago ({saldo_pago:.2f}).",
+        )
+
+
 @app.post(
     "/api/pago-aplicaciones",
     response_model=PagoAplicacionOut,
@@ -483,6 +512,8 @@ def create_pago_aplicacion(aplicacion: PagoAplicacionCreateSchema, conn=Depends(
         raise HTTPException(status_code=404, detail="Pago no encontrado")
     if not DeudaConnection(conn).get_by_id(aplicacion.deuda_id):
         raise HTTPException(status_code=404, detail="Deuda no encontrada")
+
+    _validar_monto_aplicacion(conn, aplicacion.pago_id, aplicacion.deuda_id, aplicacion.monto_aplicado)
 
     row = PagoAplicacionConnection(conn).create(
         pago_id=aplicacion.pago_id,
@@ -500,10 +531,20 @@ def create_pago_aplicacion(aplicacion: PagoAplicacionCreateSchema, conn=Depends(
 )
 def update_pago_aplicacion(pago_aplicacion_id: int, aplicacion: PagoAplicacionUpdateSchema, conn=Depends(get_db)):
     repo = PagoAplicacionConnection(conn)
-    if not repo.get_by_id(pago_aplicacion_id):
+    existente = repo.get_by_id(pago_aplicacion_id)
+    if not existente:
         raise HTTPException(status_code=404, detail="Aplicación de pago no encontrada")
 
     fields = aplicacion.model_dump(exclude_unset=True)
+    if "monto_aplicado" in fields:
+        _validar_monto_aplicacion(
+            conn,
+            existente["pago_id"],
+            existente["deuda_id"],
+            fields["monto_aplicado"],
+            excluir_id=pago_aplicacion_id,
+        )
+
     row = repo.update(pago_aplicacion_id, fields)
     return PagoAplicacionOut.from_row(row)
 
@@ -516,6 +557,43 @@ def update_pago_aplicacion(pago_aplicacion_id: int, aplicacion: PagoAplicacionUp
 def delete_pago_aplicacion(pago_aplicacion_id: int, conn=Depends(get_db)):
     if not PagoAplicacionConnection(conn).delete(pago_aplicacion_id):
         raise HTTPException(status_code=404, detail="Aplicación de pago no encontrada")
+
+
+@app.get(
+    "/api/clientes/{cliente_id}/historial",
+    response_model=ClienteHistorialOut,
+    dependencies=[Depends(get_current_active_user)],
+    status_code=HTTP_200_OK,
+)
+def get_historial_cliente(cliente_id: int, conn=Depends(get_db)):
+    """RF9: historial transaccional completo de un cliente (deudas con sus líneas y pagos con sus aplicaciones)."""
+    cliente_row = ClienteConnection(conn).get_by_id(cliente_id)
+    if not cliente_row:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+
+    detalle_repo = VentaDetalleConnection(conn)
+    aplicacion_repo = PagoAplicacionConnection(conn)
+
+    deudas: List[DeudaConDetalleOut] = []
+    saldo_total = 0.0
+    for row in DeudaConnection(conn).list_all(cliente_id=cliente_id):
+        deuda_out = DeudaOut.from_row(row)
+        detalles = [VentaDetalleOut.from_row(d) for d in detalle_repo.list_all(deuda_id=row["id"])]
+        deudas.append(DeudaConDetalleOut(**deuda_out.model_dump(), detalles=detalles))
+        saldo_total += deuda_out.saldo
+
+    pagos: List[PagoConAplicacionesOut] = []
+    for row in PagoConnection(conn).list_all(cliente_id=cliente_id):
+        pago_out = PagoOut.from_row(row)
+        aplicaciones = [PagoAplicacionOut.from_row(a) for a in aplicacion_repo.list_all(pago_id=row["id"])]
+        pagos.append(PagoConAplicacionesOut(**pago_out.model_dump(), aplicaciones=aplicaciones))
+
+    return ClienteHistorialOut(
+        cliente=ClienteOut.from_row(cliente_row),
+        deudas=deudas,
+        pagos=pagos,
+        saldo_total=saldo_total,
+    )
 
 
 if __name__ == "__main__":

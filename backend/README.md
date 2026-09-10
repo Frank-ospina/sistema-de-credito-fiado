@@ -32,6 +32,14 @@ El modelo de `Usuario` replica el contrato definido en `../src/domain/types.ts` 
 
 Eliminar un `Cliente` elimina en cascada sus `Deuda` y `Pago` (y estos, a su vez, sus `VentaDetalle`/`PagoAplicacion`). No se puede eliminar un `Producto` referenciado por algún `VentaDetalle`.
 
+### Reglas de negocio automáticas
+
+- **Cálculo automático del total** (RF4): `Deuda.monto_total` no se envía al crear/editar una deuda; un trigger de PostgreSQL (`recalcular_monto_total_deuda`) lo recalcula solo a partir de la suma de sus `VentaDetalle` cada vez que se agrega, edita o elimina una línea.
+- **Saldo y estado en tiempo real** (RF7): `DeudaOut` expone `monto_aplicado`, `saldo` y `estado` (`pendiente` | `parcial` | `pagada`), calculados en cada consulta a partir de sus `PagoAplicacion`. `PagoOut` expone de forma análoga `monto_aplicado` y `saldo_disponible`.
+- **Validación de sobregiro** (RF8): al crear o editar una `PagoAplicacion`, la API rechaza (HTTP 400) que el monto aplicado exceda el saldo pendiente de la deuda o el saldo disponible del pago.
+- **Historial por cliente** (RF9): `GET /api/clientes/{id}/historial` devuelve el cliente con todas sus deudas (con líneas) y pagos (con aplicaciones) en una sola respuesta, más el saldo total adeudado.
+- **Auditoría automática** (RF10): todas las tablas tienen `created_at`/`updated_at`; un trigger (`set_updated_at`) actualiza `updated_at` en cada `UPDATE`, sin intervención del código de la API.
+
 ## Instalación
 
 1. Crea y activa un entorno virtual:
@@ -101,5 +109,6 @@ Documentación interactiva en `http://127.0.0.1:8000/docs`.
 | GET/POST/PUT/DELETE | `/api/pagos[/{id}]` | CRUD de pagos | Cualquier usuario activo |
 | GET | `/api/pago-aplicaciones?pago_id=&deuda_id=` | Lista aplicaciones de pago, opcionalmente filtradas | Cualquier usuario activo |
 | GET/POST/PUT/DELETE | `/api/pago-aplicaciones[/{id}]` | CRUD de aplicaciones de pago | Cualquier usuario activo |
+| GET | `/api/clientes/{id}/historial` | Historial completo del cliente: deudas con líneas, pagos con aplicaciones y saldo total | Cualquier usuario activo |
 
 Las rutas protegidas requieren el header `Authorization: Bearer <token>` obtenido en `/auth/token`.

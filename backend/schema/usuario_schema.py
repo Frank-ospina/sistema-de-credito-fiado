@@ -38,6 +38,7 @@ class UsuarioUpdateSchema(BaseModel):
 class UsuarioOut(UsuarioBase):
     id: str
     created_at: str
+    updated_at: str
 
     @classmethod
     def from_row(cls, row: dict) -> "UsuarioOut":
@@ -48,4 +49,5 @@ class UsuarioOut(UsuarioBase):
             rol=row["rol"],
             activo=row["activo"],
             created_at=row["created_at"].isoformat(),
+            updated_at=row["updated_at"].isoformat(),
         )
