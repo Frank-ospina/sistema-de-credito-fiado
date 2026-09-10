@@ -1,6 +1,6 @@
 # FiadoApp
 
-Aplicación React + TypeScript para gestionar clientes, fiados, pagos, productos y usuarios de una tienda de barrio.
+Monolito para gestionar clientes, fiados, pagos, productos y usuarios de una tienda de barrio: frontend en React + TypeScript (raíz del repo) y backend en Python + FastAPI (`backend/`).
 
 ## Desarrollo
 
@@ -51,4 +51,4 @@ npm run build
 
 Para añadir una funcionalidad, crea o modifica la feature correspondiente, agrega tipos en `domain/types.ts` si son necesarios y conecta la mutación en `App.tsx`. Evita poner reglas financieras o JSX de pantallas dentro de `App.tsx`.
 
-Actualmente los datos viven en memoria y se reinician al recargar la aplicación. La persistencia y el backend quedan para la siguiente etapa.
+Actualmente el frontend mantiene los datos en memoria (se reinician al recargar). El backend en `backend/` (ver `backend/README.md`) ya expone autenticación y el CRUD de usuarios sobre PostgreSQL; conectar el resto de features al backend queda para la siguiente etapa.
