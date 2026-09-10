@@ -23,7 +23,6 @@ export default function App() {
     clientes,
     setClientes,
     productos,
-    setProductos,
     deudas,
     setDeudas,
     pagos,
@@ -101,14 +100,7 @@ export default function App() {
           />
         )
       case 'productos':
-        return (
-          <ProductosCatalogo
-            productos={productos}
-            onAdd={producto => setProductos(previous => [...previous, producto])}
-            onUpdate={producto => setProductos(previous => previous.map(item => item.id === producto.id ? producto : item))}
-            onDelete={id => setProductos(previous => previous.filter(producto => producto.id !== id))}
-          />
-        )
+        return <ProductosCatalogo />
       case 'usuarios':
         return isAdmin ? <UsuariosAdmin currentUser={currentUser} /> : null
     }

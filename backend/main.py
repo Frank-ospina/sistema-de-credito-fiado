@@ -8,7 +8,9 @@ from auth.auth import get_current_active_user, get_current_admin_user, get_passw
 from auth.auth_routes import router as auth_router
 from config import ALLOWED_ORIGINS
 from database.database import get_db
+from models.producto_connection import ProductoConnection
 from models.usuario_connection import UsuarioConnection
+from schema.producto_schema import ProductoCreateSchema, ProductoOut, ProductoUpdateSchema
 from schema.usuario_schema import UsuarioCreateSchema, UsuarioOut, UsuarioUpdateSchema
 
 app = FastAPI(title="Sistema de Crédito Fiado - API")
@@ -110,6 +112,54 @@ def update_usuario(usuario_id: str, usuario: UsuarioUpdateSchema, conn=Depends(g
 def delete_usuario(usuario_id: str, conn=Depends(get_db)):
     if not UsuarioConnection(conn).delete(usuario_id):
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+
+
+@app.get(
+    "/api/productos",
+    response_model=List[ProductoOut],
+    dependencies=[Depends(get_current_active_user)],
+    status_code=HTTP_200_OK,
+)
+def list_productos(conn=Depends(get_db)):
+    rows = ProductoConnection(conn).list_all()
+    return [ProductoOut.from_row(row) for row in rows]
+
+
+@app.post(
+    "/api/productos",
+    response_model=ProductoOut,
+    dependencies=[Depends(get_current_active_user)],
+    status_code=HTTP_201_CREATED,
+)
+def create_producto(producto: ProductoCreateSchema, conn=Depends(get_db)):
+    row = ProductoConnection(conn).create(nombre=producto.nombre, precio_actual=producto.precio_actual)
+    return ProductoOut.from_row(row)
+
+
+@app.put(
+    "/api/productos/{producto_id}",
+    response_model=ProductoOut,
+    dependencies=[Depends(get_current_active_user)],
+    status_code=HTTP_200_OK,
+)
+def update_producto(producto_id: int, producto: ProductoUpdateSchema, conn=Depends(get_db)):
+    repo = ProductoConnection(conn)
+    if not repo.get_by_id(producto_id):
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+
+    fields = producto.model_dump(exclude_unset=True)
+    row = repo.update(producto_id, fields)
+    return ProductoOut.from_row(row)
+
+
+@app.delete(
+    "/api/productos/{producto_id}",
+    dependencies=[Depends(get_current_active_user)],
+    status_code=HTTP_204_NO_CONTENT,
+)
+def delete_producto(producto_id: int, conn=Depends(get_db)):
+    if not ProductoConnection(conn).delete(producto_id):
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
 
 
 if __name__ == "__main__":

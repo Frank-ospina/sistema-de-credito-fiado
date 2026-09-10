@@ -82,6 +82,56 @@ export async function deleteUsuario(id: string): Promise<void> {
   }
 }
 
+export type ProductoApi = {
+  id: string
+  nombre: string
+  precio_actual: number
+}
+
+export type ProductoInput = {
+  nombre: string
+  precio_actual: number
+}
+
+function toProductoApi(data: { id: number; nombre: string; precio_actual: number }): ProductoApi {
+  return { id: String(data.id), nombre: data.nombre, precio_actual: data.precio_actual }
+}
+
+export async function listProductos(): Promise<ProductoApi[]> {
+  try {
+    const { data } = await api.get<{ id: number; nombre: string; precio_actual: number }[]>('/api/productos', { headers: authHeaders() })
+    return data.map(toProductoApi)
+  } catch (error) {
+    throw toApiError(error, 'No se pudo obtener el catálogo de productos.')
+  }
+}
+
+export async function createProducto(input: ProductoInput): Promise<ProductoApi> {
+  try {
+    const { data } = await api.post<{ id: number; nombre: string; precio_actual: number }>('/api/productos', input, { headers: authHeaders() })
+    return toProductoApi(data)
+  } catch (error) {
+    throw toApiError(error, 'No se pudo crear el producto.')
+  }
+}
+
+export async function updateProducto(id: string, input: Partial<ProductoInput>): Promise<ProductoApi> {
+  try {
+    const { data } = await api.put<{ id: number; nombre: string; precio_actual: number }>(`/api/productos/${id}`, input, { headers: authHeaders() })
+    return toProductoApi(data)
+  } catch (error) {
+    throw toApiError(error, 'No se pudo actualizar el producto.')
+  }
+}
+
+export async function deleteProducto(id: string): Promise<void> {
+  try {
+    await api.delete(`/api/productos/${id}`, { headers: authHeaders() })
+  } catch (error) {
+    throw toApiError(error, 'No se pudo eliminar el producto.')
+  }
+}
+
 /** Autentica contra /auth/token y devuelve el perfil autenticado. */
 export async function login(username: string, password: string): Promise<UsuarioApi> {
   const form = new URLSearchParams({ username, password })
