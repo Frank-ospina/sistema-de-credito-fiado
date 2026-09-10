@@ -1,16 +1,171 @@
-import type { ReactNode } from 'react'
-import type { Usuario, ViewName } from '../domain/types'
-import { IcoBox, IcoDollar, IcoHome, IcoLogout, IcoPlus, IcoShield, IcoUsers } from '../components/icons'
-import { ThemeToggle } from '../components/ThemeToggle'
+import type { ReactNode } from "react";
+import type { Usuario, ViewName } from "../domain/types";
+import {
+  IcoBox,
+  IcoDollar,
+  IcoHome,
+  IcoLogout,
+  IcoPlus,
+  IcoShield,
+  IcoUsers,
+} from "../components/icons";
+import { ThemeToggle } from "../components/ThemeToggle";
 
-type AppShellProps = { currentUser: Usuario; view: ViewName; isAdmin: boolean; onNavigate: (view: ViewName) => void; onLogout: () => void; children: ReactNode }
+type AppShellProps = {
+  currentUser: Usuario;
+  view: ViewName;
+  isAdmin: boolean;
+  onNavigate: (view: ViewName) => void;
+  onLogout: () => void;
+  children: ReactNode;
+};
 
 /** Layout autenticado compartido por las vistas de la aplicación. */
-export function AppShell({ currentUser, view, isAdmin, onNavigate, onLogout, children }: AppShellProps) {
-  const navMain = [{ id: 'dashboard' as ViewName, label: 'Inicio', icon: <IcoHome /> }, { id: 'clientes' as ViewName, label: 'Clientes', icon: <IcoUsers /> }, { id: 'productos' as ViewName, label: 'Productos', icon: <IcoBox /> }]
-  const isActive = (targetView: ViewName) => view === targetView || (targetView === 'clientes' && view === 'cliente-detalle')
-  const quickNav = [{ id: 'nueva-deuda' as ViewName, label: 'Fiar', icon: <IcoPlus /> }, { id: 'registrar-pago' as ViewName, label: 'Pago', icon: <IcoDollar /> }, ...(isAdmin ? [{ id: 'usuarios' as ViewName, label: 'Admin', icon: <IcoShield /> }] : [])]
-  const initials = currentUser.nombre.split(' ').map(name => name[0]).slice(0, 2).join('').toUpperCase()
+export function AppShell({
+  currentUser,
+  view,
+  isAdmin,
+  onNavigate,
+  onLogout,
+  children,
+}: AppShellProps) {
+  const navMain = [
+    { id: "dashboard" as ViewName, label: "Inicio", icon: <IcoHome /> },
+    { id: "clientes" as ViewName, label: "Clientes", icon: <IcoUsers /> },
+    { id: "productos" as ViewName, label: "Productos", icon: <IcoBox /> },
+  ];
+  const isActive = (targetView: ViewName) =>
+    view === targetView ||
+    (targetView === "clientes" && view === "cliente-detalle");
+  const quickNav = [
+    { id: "nueva-deuda" as ViewName, label: "Fiar", icon: <IcoPlus /> },
+    { id: "registrar-pago" as ViewName, label: "Pago", icon: <IcoDollar /> },
+    ...(isAdmin
+      ? [{ id: "usuarios" as ViewName, label: "Admin", icon: <IcoShield /> }]
+      : []),
+  ];
+  const initials = currentUser.nombre
+    .split(" ")
+    .map((name) => name[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
-  return <div className="flex h-full bg-[var(--bg-app)] text-[var(--text-primary)] font-sans"><aside className="hidden md:flex w-52 shrink-0 flex-col border-r border-[var(--bg-elevated)]"><div className="px-4 py-4 border-b border-[var(--bg-elevated)]"><div className="flex items-center justify-between gap-2.5"><div className="flex items-center gap-2.5"><div className="w-7 h-7 rounded-md bg-[var(--accent-green)] flex items-center justify-center text-white text-sm font-bold select-none">F</div><span className="font-semibold text-[var(--text-primary)] text-sm">FiadoApp</span></div><ThemeToggle /></div><p className="text-[11px] text-[var(--text-muted)] mt-1">Tienda de barrio</p></div><nav className="flex-1 px-2 py-3 flex flex-col gap-0.5 overflow-y-auto">{navMain.map(item => <button key={item.id} onClick={() => onNavigate(item.id)} className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${isActive(item.id) ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'}`}>{item.icon}{item.label}</button>)}<div className="mt-3 pt-3 border-t border-[var(--bg-elevated)] flex flex-col gap-0.5">{quickNav.slice(0, 2).map(item => <button key={item.id} onClick={() => onNavigate(item.id)} className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${view === item.id ? (item.id === 'nueva-deuda' ? 'bg-[var(--bg-green-subtle)] text-[var(--accent-green-light)]' : 'bg-[var(--bg-blue-subtle)] text-[var(--accent-blue)]') : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'}`}>{item.icon}{item.id === 'nueva-deuda' ? 'Nueva deuda' : 'Registrar pago'}</button>)}</div>{isAdmin && <div className="mt-3 pt-3 border-t border-[var(--bg-elevated)]"><button onClick={() => onNavigate('usuarios')} className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${view === 'usuarios' ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]'}`}><IcoShield />Usuarios</button></div>}</nav><div className="px-3 py-3 border-t border-[var(--bg-elevated)]"><div className="flex items-center gap-2.5 px-2 py-2 rounded-md hover:bg-[var(--bg-surface)] transition-colors"><div className="w-7 h-7 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center text-xs font-semibold text-[var(--text-secondary)] select-none shrink-0">{initials}</div><div className="flex-1 min-w-0"><div className="text-xs font-medium text-[var(--text-primary)] truncate">{currentUser.nombre}</div><div className="text-[10px] text-[var(--text-muted)] capitalize">{currentUser.rol}</div></div><button onClick={onLogout} className="text-[var(--text-muted)] hover:text-[var(--accent-red)] cursor-pointer transition-colors shrink-0" title="Cerrar sesión"><IcoLogout /></button></div></div></aside><main className="flex-1 overflow-auto pb-16 md:pb-0"><div className="md:hidden flex items-center justify-between px-4 py-2.5 border-b border-[var(--bg-elevated)] bg-[var(--bg-surface)] sticky top-0 z-10"><div className="flex items-center gap-2"><div className="w-6 h-6 rounded-md bg-[var(--accent-green)] flex items-center justify-center text-white text-xs font-bold select-none">F</div><span className="text-sm font-semibold text-[var(--text-primary)]">FiadoApp</span></div><div className="flex items-center gap-2.5"><div className="text-right"><div className="text-xs font-medium text-[var(--text-primary)] leading-tight">{currentUser.nombre}</div><div className="text-[10px] text-[var(--text-muted)] capitalize">{currentUser.rol}</div></div><ThemeToggle /><button onClick={onLogout} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[var(--bg-elevated)] border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:text-[var(--accent-red)] hover:border-[rgb(var(--accent-red-rgb)/30%)] hover:bg-[var(--bg-red-subtle)] cursor-pointer transition-colors" title="Cerrar sesión"><IcoLogout /><span>Salir</span></button></div></div>{children}</main><div className="md:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-surface)] border-t border-[var(--bg-elevated)] flex z-10">{quickNav.map(item => <button key={item.id} onClick={() => onNavigate(item.id)} className={`flex-1 flex flex-col items-center py-2.5 gap-0.5 text-[10px] cursor-pointer transition-colors ${isActive(item.id) ? 'text-[var(--accent-green-light)]' : 'text-[var(--text-secondary)]'}`}>{item.icon}{item.label}</button>)}</div></div>
+  return (
+    <div className="flex h-full bg-[var(--bg-app)] text-[var(--text-primary)] font-sans">
+      <aside className="hidden md:flex w-52 shrink-0 flex-col border-r border-[var(--bg-elevated)]">
+        <div className="px-4 py-4 border-b border-[var(--bg-elevated)]">
+          <div className="flex items-center justify-between gap-2.5">
+            <img
+              src="/logo.png.png"
+              alt="Fiado"
+              className="w-32 h-auto object-contain"
+            />
+            <ThemeToggle />
+          </div>
+          <p className="text-[11px] text-[var(--text-muted)] mt-1">
+            Tienda de barrio
+          </p>
+        </div>
+        <nav className="flex-1 px-2 py-3 flex flex-col gap-0.5 overflow-y-auto">
+          {navMain.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${isActive(item.id) ? "bg-[var(--bg-elevated)] text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"}`}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+          <div className="mt-3 pt-3 border-t border-[var(--bg-elevated)] flex flex-col gap-0.5">
+            {quickNav.slice(0, 2).map((item) => (
+              <button
+                key={item.id}
+                onClick={() => onNavigate(item.id)}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${view === item.id ? (item.id === "nueva-deuda" ? "bg-[var(--bg-green-subtle)] text-[var(--accent-green-light)]" : "bg-[var(--bg-blue-subtle)] text-[var(--accent-blue)]") : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"}`}
+              >
+                {item.icon}
+                {item.id === "nueva-deuda" ? "Nueva deuda" : "Registrar pago"}
+              </button>
+            ))}
+          </div>
+          {isAdmin && (
+            <div className="mt-3 pt-3 border-t border-[var(--bg-elevated)]">
+              <button
+                onClick={() => onNavigate("usuarios")}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${view === "usuarios" ? "bg-[var(--bg-elevated)] text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)]"}`}
+              >
+                <IcoShield />
+                Usuarios
+              </button>
+            </div>
+          )}
+        </nav>
+        <div className="px-3 py-3 border-t border-[var(--bg-elevated)]">
+          <div className="flex items-center gap-2.5 px-2 py-2 rounded-md hover:bg-[var(--bg-surface)] transition-colors">
+            <div className="w-7 h-7 rounded-full bg-[var(--bg-elevated)] border border-[var(--border)] flex items-center justify-center text-xs font-semibold text-[var(--text-secondary)] select-none shrink-0">
+              {initials}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-medium text-[var(--text-primary)] truncate">
+                {currentUser.nombre}
+              </div>
+              <div className="text-[10px] text-[var(--text-muted)] capitalize">
+                {currentUser.rol}
+              </div>
+            </div>
+            <button
+              onClick={onLogout}
+              className="text-[var(--text-muted)] hover:text-[var(--accent-red)] cursor-pointer transition-colors shrink-0"
+              title="Cerrar sesión"
+            >
+              <IcoLogout />
+            </button>
+          </div>
+        </div>
+      </aside>
+      <main className="flex-1 overflow-auto pb-16 md:pb-0">
+        <div className="md:hidden flex items-center justify-between px-4 py-2.5 border-b border-[var(--bg-elevated)] bg-[var(--bg-surface)] sticky top-0 z-10">
+          <img
+            src="/logo.png.png"
+            alt="Fiado"
+            className="w-24 h-auto object-contain"
+          />
+          <div className="flex items-center gap-2.5">
+            <div className="text-right">
+              <div className="text-xs font-medium text-[var(--text-primary)] leading-tight">
+                {currentUser.nombre}
+              </div>
+              <div className="text-[10px] text-[var(--text-muted)] capitalize">
+                {currentUser.rol}
+              </div>
+            </div>
+            <ThemeToggle />
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[var(--bg-elevated)] border border-[var(--border)] text-xs text-[var(--text-secondary)] hover:text-[var(--accent-red)] hover:border-[rgb(var(--accent-red-rgb)/30%)] hover:bg-[var(--bg-red-subtle)] cursor-pointer transition-colors"
+              title="Cerrar sesión"
+            >
+              <IcoLogout />
+              <span>Salir</span>
+            </button>
+          </div>
+        </div>
+        {children}
+      </main>
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-surface)] border-t border-[var(--bg-elevated)] flex z-10">
+        {quickNav.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onNavigate(item.id)}
+            className={`flex-1 flex flex-col items-center py-2.5 gap-0.5 text-[10px] cursor-pointer transition-colors ${isActive(item.id) ? "text-[var(--accent-green-light)]" : "text-[var(--text-secondary)]"}`}
+          >
+            {item.icon}
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
