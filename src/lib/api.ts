@@ -15,7 +15,18 @@ export type UsuarioApi = {
   created_at: string
 }
 
+export type UsuarioCreateInput = {
+  nombre: string
+  username: string
+  password: string
+  rol: RolUsuario
+  activo: boolean
+}
+
+export type UsuarioUpdateInput = Partial<UsuarioCreateInput>
+
 export class LoginError extends Error {}
+export class ApiError extends Error {}
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY)
@@ -23,6 +34,52 @@ export function getToken() {
 
 export function clearToken() {
   localStorage.removeItem(TOKEN_KEY)
+}
+
+function authHeaders() {
+  return { Authorization: `Bearer ${getToken()}` }
+}
+
+function toApiError(error: unknown, fallback: string): ApiError {
+  if (axios.isAxiosError(error) && error.response) {
+    return new ApiError(error.response.data?.detail ?? fallback)
+  }
+  return new ApiError('No se pudo conectar con el servidor.')
+}
+
+export async function listUsuarios(): Promise<UsuarioApi[]> {
+  try {
+    const { data } = await api.get<UsuarioApi[]>('/api/usuarios', { headers: authHeaders() })
+    return data
+  } catch (error) {
+    throw toApiError(error, 'No se pudo obtener la lista de usuarios.')
+  }
+}
+
+export async function createUsuario(input: UsuarioCreateInput): Promise<UsuarioApi> {
+  try {
+    const { data } = await api.post<UsuarioApi>('/api/usuarios', input, { headers: authHeaders() })
+    return data
+  } catch (error) {
+    throw toApiError(error, 'No se pudo crear el usuario.')
+  }
+}
+
+export async function updateUsuario(id: string, input: UsuarioUpdateInput): Promise<UsuarioApi> {
+  try {
+    const { data } = await api.put<UsuarioApi>(`/api/usuarios/${id}`, input, { headers: authHeaders() })
+    return data
+  } catch (error) {
+    throw toApiError(error, 'No se pudo actualizar el usuario.')
+  }
+}
+
+export async function deleteUsuario(id: string): Promise<void> {
+  try {
+    await api.delete(`/api/usuarios/${id}`, { headers: authHeaders() })
+  } catch (error) {
+    throw toApiError(error, 'No se pudo eliminar el usuario.')
+  }
 }
 
 /** Autentica contra /auth/token y devuelve el perfil autenticado. */
