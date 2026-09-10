@@ -24,7 +24,19 @@ from schema.producto_schema import ProductoCreateSchema, ProductoOut, ProductoUp
 from schema.usuario_schema import UsuarioCreateSchema, UsuarioOut, UsuarioUpdateSchema
 from schema.venta_detalle_schema import VentaDetalleCreateSchema, VentaDetalleOut, VentaDetalleUpdateSchema
 
-app = FastAPI(title="Sistema de Crédito Fiado - API")
+tags_metadata = [
+    {"name": "auth", "description": "Login y emisión del token JWT."},
+    {"name": "Usuarios", "description": "Cuentas de acceso al sistema (login, roles y estado)."},
+    {"name": "Productos", "description": "Catálogo de productos usado al registrar deudas."},
+    {"name": "Clientes", "description": "Personas a las que se les puede fiar, y su historial transaccional."},
+    {"name": "Deudas", "description": "Ventas fiadas asociadas a un cliente."},
+    {"name": "Detalles de Venta", "description": "Líneas de producto dentro de una deuda."},
+    {"name": "Pagos", "description": "Pagos recibidos de un cliente."},
+    {"name": "Aplicaciones de Pago", "description": "Reparto de un pago entre una o más deudas."},
+    {"name": "Sistema", "description": "Endpoints de estado del servicio."},
+]
+
+app = FastAPI(title="Sistema de Crédito Fiado - API", openapi_tags=tags_metadata)
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,12 +49,12 @@ app.add_middleware(
 app.include_router(auth_router)
 
 
-@app.get("/", status_code=HTTP_200_OK)
+@app.get("/", status_code=HTTP_200_OK, tags=["Sistema"])
 def health_check():
     return {"status": "ok"}
 
 
-@app.get("/api/usuarios/me", response_model=UsuarioOut, status_code=HTTP_200_OK)
+@app.get("/api/usuarios/me", response_model=UsuarioOut, status_code=HTTP_200_OK, tags=["Usuarios"])
 def get_me(current_user: UsuarioOut = Depends(get_current_active_user)):
     return current_user
 
@@ -52,6 +64,7 @@ def get_me(current_user: UsuarioOut = Depends(get_current_active_user)):
     response_model=List[UsuarioOut],
     dependencies=[Depends(get_current_admin_user)],
     status_code=HTTP_200_OK,
+    tags=["Usuarios"],
 )
 def list_usuarios(conn=Depends(get_db)):
     rows = UsuarioConnection(conn).list_all()
@@ -63,6 +76,7 @@ def list_usuarios(conn=Depends(get_db)):
     response_model=UsuarioOut,
     dependencies=[Depends(get_current_admin_user)],
     status_code=HTTP_200_OK,
+    tags=["Usuarios"],
 )
 def get_usuario(usuario_id: str, conn=Depends(get_db)):
     row = UsuarioConnection(conn).get_by_id(usuario_id)
@@ -76,6 +90,7 @@ def get_usuario(usuario_id: str, conn=Depends(get_db)):
     response_model=UsuarioOut,
     dependencies=[Depends(get_current_admin_user)],
     status_code=HTTP_201_CREATED,
+    tags=["Usuarios"],
 )
 def create_usuario(usuario: UsuarioCreateSchema, conn=Depends(get_db)):
     repo = UsuarioConnection(conn)
@@ -97,6 +112,7 @@ def create_usuario(usuario: UsuarioCreateSchema, conn=Depends(get_db)):
     response_model=UsuarioOut,
     dependencies=[Depends(get_current_admin_user)],
     status_code=HTTP_200_OK,
+    tags=["Usuarios"],
 )
 def update_usuario(usuario_id: str, usuario: UsuarioUpdateSchema, conn=Depends(get_db)):
     repo = UsuarioConnection(conn)
@@ -119,6 +135,7 @@ def update_usuario(usuario_id: str, usuario: UsuarioUpdateSchema, conn=Depends(g
     "/api/usuarios/{usuario_id}",
     dependencies=[Depends(get_current_admin_user)],
     status_code=HTTP_204_NO_CONTENT,
+    tags=["Usuarios"],
 )
 def delete_usuario(usuario_id: str, conn=Depends(get_db)):
     if not UsuarioConnection(conn).delete(usuario_id):
@@ -130,6 +147,7 @@ def delete_usuario(usuario_id: str, conn=Depends(get_db)):
     response_model=List[ProductoOut],
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Productos"],
 )
 def list_productos(conn=Depends(get_db)):
     rows = ProductoConnection(conn).list_all()
@@ -141,6 +159,7 @@ def list_productos(conn=Depends(get_db)):
     response_model=ProductoOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_201_CREATED,
+    tags=["Productos"],
 )
 def create_producto(producto: ProductoCreateSchema, conn=Depends(get_db)):
     row = ProductoConnection(conn).create(nombre=producto.nombre, precio_actual=producto.precio_actual)
@@ -152,6 +171,7 @@ def create_producto(producto: ProductoCreateSchema, conn=Depends(get_db)):
     response_model=ProductoOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Productos"],
 )
 def update_producto(producto_id: int, producto: ProductoUpdateSchema, conn=Depends(get_db)):
     repo = ProductoConnection(conn)
@@ -167,6 +187,7 @@ def update_producto(producto_id: int, producto: ProductoUpdateSchema, conn=Depen
     "/api/productos/{producto_id}",
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_204_NO_CONTENT,
+    tags=["Productos"],
 )
 def delete_producto(producto_id: int, conn=Depends(get_db)):
     if not ProductoConnection(conn).delete(producto_id):
@@ -178,6 +199,7 @@ def delete_producto(producto_id: int, conn=Depends(get_db)):
     response_model=List[ClienteOut],
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Clientes"],
 )
 def list_clientes(conn=Depends(get_db)):
     rows = ClienteConnection(conn).list_all()
@@ -189,6 +211,7 @@ def list_clientes(conn=Depends(get_db)):
     response_model=ClienteOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Clientes"],
 )
 def get_cliente(cliente_id: int, conn=Depends(get_db)):
     row = ClienteConnection(conn).get_by_id(cliente_id)
@@ -202,6 +225,7 @@ def get_cliente(cliente_id: int, conn=Depends(get_db)):
     response_model=ClienteOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_201_CREATED,
+    tags=["Clientes"],
 )
 def create_cliente(cliente: ClienteCreateSchema, conn=Depends(get_db)):
     row = ClienteConnection(conn).create(nombre=cliente.nombre, telefono=cliente.telefono, direccion=cliente.direccion)
@@ -213,6 +237,7 @@ def create_cliente(cliente: ClienteCreateSchema, conn=Depends(get_db)):
     response_model=ClienteOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Clientes"],
 )
 def update_cliente(cliente_id: int, cliente: ClienteUpdateSchema, conn=Depends(get_db)):
     repo = ClienteConnection(conn)
@@ -228,6 +253,7 @@ def update_cliente(cliente_id: int, cliente: ClienteUpdateSchema, conn=Depends(g
     "/api/clientes/{cliente_id}",
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_204_NO_CONTENT,
+    tags=["Clientes"],
 )
 def delete_cliente(cliente_id: int, conn=Depends(get_db)):
     if not ClienteConnection(conn).delete(cliente_id):
@@ -239,6 +265,7 @@ def delete_cliente(cliente_id: int, conn=Depends(get_db)):
     response_model=List[DeudaOut],
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Deudas"],
 )
 def list_deudas(cliente_id: Optional[int] = Query(None), conn=Depends(get_db)):
     rows = DeudaConnection(conn).list_all(cliente_id=cliente_id)
@@ -250,6 +277,7 @@ def list_deudas(cliente_id: Optional[int] = Query(None), conn=Depends(get_db)):
     response_model=DeudaOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Deudas"],
 )
 def get_deuda(deuda_id: int, conn=Depends(get_db)):
     row = DeudaConnection(conn).get_by_id(deuda_id)
@@ -263,6 +291,7 @@ def get_deuda(deuda_id: int, conn=Depends(get_db)):
     response_model=DeudaOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_201_CREATED,
+    tags=["Deudas"],
 )
 def create_deuda(deuda: DeudaCreateSchema, conn=Depends(get_db)):
     repo_cliente = ClienteConnection(conn)
@@ -278,6 +307,7 @@ def create_deuda(deuda: DeudaCreateSchema, conn=Depends(get_db)):
     response_model=DeudaOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Deudas"],
 )
 def update_deuda(deuda_id: int, deuda: DeudaUpdateSchema, conn=Depends(get_db)):
     repo = DeudaConnection(conn)
@@ -296,6 +326,7 @@ def update_deuda(deuda_id: int, deuda: DeudaUpdateSchema, conn=Depends(get_db)):
     "/api/deudas/{deuda_id}",
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_204_NO_CONTENT,
+    tags=["Deudas"],
 )
 def delete_deuda(deuda_id: int, conn=Depends(get_db)):
     if not DeudaConnection(conn).delete(deuda_id):
@@ -307,6 +338,7 @@ def delete_deuda(deuda_id: int, conn=Depends(get_db)):
     response_model=List[VentaDetalleOut],
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Detalles de Venta"],
 )
 def list_venta_detalles(deuda_id: Optional[int] = Query(None), conn=Depends(get_db)):
     rows = VentaDetalleConnection(conn).list_all(deuda_id=deuda_id)
@@ -318,6 +350,7 @@ def list_venta_detalles(deuda_id: Optional[int] = Query(None), conn=Depends(get_
     response_model=VentaDetalleOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Detalles de Venta"],
 )
 def get_venta_detalle(venta_detalle_id: int, conn=Depends(get_db)):
     row = VentaDetalleConnection(conn).get_by_id(venta_detalle_id)
@@ -331,6 +364,7 @@ def get_venta_detalle(venta_detalle_id: int, conn=Depends(get_db)):
     response_model=VentaDetalleOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_201_CREATED,
+    tags=["Detalles de Venta"],
 )
 def create_venta_detalle(detalle: VentaDetalleCreateSchema, conn=Depends(get_db)):
     if not DeudaConnection(conn).get_by_id(detalle.deuda_id):
@@ -352,6 +386,7 @@ def create_venta_detalle(detalle: VentaDetalleCreateSchema, conn=Depends(get_db)
     response_model=VentaDetalleOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Detalles de Venta"],
 )
 def update_venta_detalle(venta_detalle_id: int, detalle: VentaDetalleUpdateSchema, conn=Depends(get_db)):
     repo = VentaDetalleConnection(conn)
@@ -367,6 +402,7 @@ def update_venta_detalle(venta_detalle_id: int, detalle: VentaDetalleUpdateSchem
     "/api/venta-detalles/{venta_detalle_id}",
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_204_NO_CONTENT,
+    tags=["Detalles de Venta"],
 )
 def delete_venta_detalle(venta_detalle_id: int, conn=Depends(get_db)):
     if not VentaDetalleConnection(conn).delete(venta_detalle_id):
@@ -378,6 +414,7 @@ def delete_venta_detalle(venta_detalle_id: int, conn=Depends(get_db)):
     response_model=List[PagoOut],
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Pagos"],
 )
 def list_pagos(cliente_id: Optional[int] = Query(None), conn=Depends(get_db)):
     rows = PagoConnection(conn).list_all(cliente_id=cliente_id)
@@ -389,6 +426,7 @@ def list_pagos(cliente_id: Optional[int] = Query(None), conn=Depends(get_db)):
     response_model=PagoOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Pagos"],
 )
 def get_pago(pago_id: int, conn=Depends(get_db)):
     row = PagoConnection(conn).get_by_id(pago_id)
@@ -402,6 +440,7 @@ def get_pago(pago_id: int, conn=Depends(get_db)):
     response_model=PagoOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_201_CREATED,
+    tags=["Pagos"],
 )
 def create_pago(pago: PagoCreateSchema, conn=Depends(get_db)):
     if not ClienteConnection(conn).get_by_id(pago.cliente_id):
@@ -421,6 +460,7 @@ def create_pago(pago: PagoCreateSchema, conn=Depends(get_db)):
     response_model=PagoOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Pagos"],
 )
 def update_pago(pago_id: int, pago: PagoUpdateSchema, conn=Depends(get_db)):
     repo = PagoConnection(conn)
@@ -439,6 +479,7 @@ def update_pago(pago_id: int, pago: PagoUpdateSchema, conn=Depends(get_db)):
     "/api/pagos/{pago_id}",
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_204_NO_CONTENT,
+    tags=["Pagos"],
 )
 def delete_pago(pago_id: int, conn=Depends(get_db)):
     if not PagoConnection(conn).delete(pago_id):
@@ -450,6 +491,7 @@ def delete_pago(pago_id: int, conn=Depends(get_db)):
     response_model=List[PagoAplicacionOut],
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Aplicaciones de Pago"],
 )
 def list_pago_aplicaciones(
     pago_id: Optional[int] = Query(None),
@@ -465,6 +507,7 @@ def list_pago_aplicaciones(
     response_model=PagoAplicacionOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Aplicaciones de Pago"],
 )
 def get_pago_aplicacion(pago_aplicacion_id: int, conn=Depends(get_db)):
     row = PagoAplicacionConnection(conn).get_by_id(pago_aplicacion_id)
@@ -506,6 +549,7 @@ def _validar_monto_aplicacion(conn, pago_id: int, deuda_id: int, monto_aplicado:
     response_model=PagoAplicacionOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_201_CREATED,
+    tags=["Aplicaciones de Pago"],
 )
 def create_pago_aplicacion(aplicacion: PagoAplicacionCreateSchema, conn=Depends(get_db)):
     if not PagoConnection(conn).get_by_id(aplicacion.pago_id):
@@ -528,6 +572,7 @@ def create_pago_aplicacion(aplicacion: PagoAplicacionCreateSchema, conn=Depends(
     response_model=PagoAplicacionOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Aplicaciones de Pago"],
 )
 def update_pago_aplicacion(pago_aplicacion_id: int, aplicacion: PagoAplicacionUpdateSchema, conn=Depends(get_db)):
     repo = PagoAplicacionConnection(conn)
@@ -553,6 +598,7 @@ def update_pago_aplicacion(pago_aplicacion_id: int, aplicacion: PagoAplicacionUp
     "/api/pago-aplicaciones/{pago_aplicacion_id}",
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_204_NO_CONTENT,
+    tags=["Aplicaciones de Pago"],
 )
 def delete_pago_aplicacion(pago_aplicacion_id: int, conn=Depends(get_db)):
     if not PagoAplicacionConnection(conn).delete(pago_aplicacion_id):
@@ -564,6 +610,7 @@ def delete_pago_aplicacion(pago_aplicacion_id: int, conn=Depends(get_db)):
     response_model=ClienteHistorialOut,
     dependencies=[Depends(get_current_active_user)],
     status_code=HTTP_200_OK,
+    tags=["Clientes"],
 )
 def get_historial_cliente(cliente_id: int, conn=Depends(get_db)):
     """RF9: historial transaccional completo de un cliente (deudas con sus líneas y pagos con sus aplicaciones)."""
